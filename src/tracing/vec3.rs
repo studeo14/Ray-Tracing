@@ -1,4 +1,9 @@
-use std::{fmt::Display, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub}};
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub},
+};
+
+use rand::Rng;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec3 {
@@ -8,6 +13,25 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
         Vec3 { e: [e0, e1, e2] }
+    }
+    pub fn random() -> Vec3 {
+        Vec3::new(rand::random(), rand::random(), rand::random())
+    }
+    pub fn random_b(min: f64, max: f64) -> Vec3 {
+        let mut rng = rand::thread_rng();
+        Vec3::new(
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+        )
+    }
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random_b(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
     }
     pub fn empty() -> Vec3 {
         Vec3 { e: [0.0; 3] }
@@ -64,11 +88,7 @@ impl Add for Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Vec3::new(
-            self.x() + rhs.x(),
-            self.y() + rhs.y(),
-            self.z() + rhs.z(),
-        )
+        Vec3::new(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
     }
 }
 
@@ -76,11 +96,7 @@ impl Add for &Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Vec3::new(
-            self.x() + rhs.x(),
-            self.y() + rhs.y(),
-            self.z() + rhs.z(),
-        )
+        Vec3::new(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
     }
 }
 
@@ -88,11 +104,7 @@ impl Add<&Vec3> for Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: &Vec3) -> Self::Output {
-        Vec3::new(
-            self.x() + rhs.x(),
-            self.y() + rhs.y(),
-            self.z() + rhs.z(),
-        )
+        Vec3::new(self.x() + rhs.x(), self.y() + rhs.y(), self.z() + rhs.z())
     }
 }
 
@@ -101,11 +113,7 @@ impl Sub for Vec3 {
     type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Vec3::new(
-            self.x() - rhs.x(),
-            self.y() - rhs.y(),
-            self.z() - rhs.z(),
-        )
+        Vec3::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
     }
 }
 
@@ -113,11 +121,7 @@ impl Sub for &Vec3 {
     type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Vec3::new(
-            self.x() - rhs.x(),
-            self.y() - rhs.y(),
-            self.z() - rhs.z(),
-        )
+        Vec3::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
     }
 }
 
@@ -125,11 +129,7 @@ impl Sub<&Vec3> for Vec3 {
     type Output = Vec3;
 
     fn sub(self, rhs: &Vec3) -> Self::Output {
-        Vec3::new(
-            self.x() - rhs.x(),
-            self.y() - rhs.y(),
-            self.z() - rhs.z(),
-        )
+        Vec3::new(self.x() - rhs.x(), self.y() - rhs.y(), self.z() - rhs.z())
     }
 }
 
@@ -139,11 +139,7 @@ impl Mul for Vec3 {
     type Output = Vec3;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Vec3::new(
-            self.x() * rhs.x(),
-            self.y() * rhs.y(),
-            self.z() * rhs.z(),
-        )
+        Vec3::new(self.x() * rhs.x(), self.y() * rhs.y(), self.z() * rhs.z())
     }
 }
 
@@ -151,11 +147,7 @@ impl Mul for &Vec3 {
     type Output = Vec3;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Vec3::new(
-            self.x() * rhs.x(),
-            self.y() * rhs.y(),
-            self.z() * rhs.z(),
-        )
+        Vec3::new(self.x() * rhs.x(), self.y() * rhs.y(), self.z() * rhs.z())
     }
 }
 
@@ -202,7 +194,6 @@ impl Div<f64> for Vec3 {
         (1.0 / rhs) * self
     }
 }
-
 impl Div<f64> for &Vec3 {
     type Output = Vec3;
 
@@ -227,20 +218,29 @@ impl MulAssign for Vec3 {
     }
 }
 
-impl DivAssign for Vec3 {
-    fn div_assign(&mut self, rhs: Self) {
-        self.e[0] /= rhs.e[0];
-        self.e[1] /= rhs.e[1];
-        self.e[2] /= rhs.e[2];
+impl MulAssign<f64> for Vec3 {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.e[0] *= rhs;
+        self.e[1] *= rhs;
+        self.e[2] *= rhs;
+    }
+}
+
+impl DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, rhs: f64) {
+        *self *= 1.0 / rhs;
     }
 }
 
 impl Display for Vec3 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}",
-               (255.999 * self.x()) as u8,
-               (255.999 * self.y()) as u8,
-               (255.999 * self.z()) as u8,)
+        write!(
+            f,
+            "{} {} {}",
+            (255.999 * self.x()) as u8,
+            (255.999 * self.y()) as u8,
+            (255.999 * self.z()) as u8,
+        )
     }
 }
 
