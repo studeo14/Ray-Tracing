@@ -3,7 +3,7 @@ use crate::tracing::ray::Ray;
 use super::{HitRecord, Hittable};
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable + Send + Sync>>,
+    objects: Vec<Box<dyn Hittable>>,
 }
 
 impl HittableList {
@@ -12,12 +12,12 @@ impl HittableList {
             objects: Vec::new(),
         }
     }
-    pub fn from(object: Box<dyn Hittable + Send + Sync>) -> HittableList {
+    pub fn from(object: Box<dyn Hittable>) -> HittableList {
         let mut h = HittableList::new();
         h.add(object);
         h
     }
-    pub fn add(&mut self, object: Box<dyn Hittable + Send + Sync>) {
+    pub fn add(&mut self, object: Box<dyn Hittable>) {
         self.objects.push(object);
     }
 }

@@ -10,7 +10,7 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
-    pub mat: Arc<dyn Scatter + Send + Sync>,
+    pub mat: Arc<dyn Scatter>,
 }
 
 impl HitRecord {
@@ -19,7 +19,7 @@ impl HitRecord {
         t: f64,
         outward_normal: Vec3,
         ray: &Ray,
-        mat: Arc<dyn Scatter + Send + Sync>,
+        mat: Arc<dyn Scatter>,
     ) -> HitRecord {
         if ray.direction().dot(&outward_normal) > 0.0 {
             HitRecord {

@@ -30,7 +30,7 @@ impl Ray {
     pub fn at(&self, t: f64) -> Point3 {
         self.m_orig + (t * self.m_dir)
     }
-    pub fn ray_color(&self, world: &Arc<impl Hittable + Send + Sync>, depth: u32) -> Color {
+    pub fn ray_color(&self, world: &Arc<impl Hittable>, depth: u32) -> Color {
         if depth > 0 {
             if let Some(hit_record) = world.hit(&self, (0.001, f64::INFINITY)) {
                 if let Some((attenuation, scattered)) = hit_record.mat.scatter(&self, &hit_record) {

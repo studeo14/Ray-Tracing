@@ -10,6 +10,6 @@ pub mod materials;
 
 use crate::Ray;
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, t_bounds: (f64, f64)) -> Option<HitRecord>;
 }

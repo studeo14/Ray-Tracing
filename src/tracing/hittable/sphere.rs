@@ -10,11 +10,11 @@ use super::{HitRecord, Hittable};
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub mat: Arc<dyn Scatter + Send + Sync>,
+    pub mat: Arc<dyn Scatter>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, mat: Arc<dyn Scatter + Send + Sync>) -> Sphere {
+    pub fn new(center: Point3, radius: f64, mat: Arc<dyn Scatter>) -> Sphere {
         Sphere {
             center,
             radius,
