@@ -4,6 +4,9 @@ pub mod hittable_list;
 pub use hittable_list::*;
 pub mod hit_record;
 pub use hit_record::*;
+pub mod scatter;
+pub use scatter::*;
+pub mod materials;
 
 use crate::Ray;
 

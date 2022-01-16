@@ -1,7 +1,7 @@
 use std::{io::Write, sync::{Arc, mpsc}};
 
 use image::RgbImage;
-use ray_tracing::{Camera, Color, ConvertToRGB, HittableList, Point3, Sphere};
+use ray_tracing::{Camera, Color, ConvertToRGB, HittableList, Point3, Sphere, materials::{Dielectric, Lambertian, Metal}};
 use threadpool::ThreadPool;
 
 /*
@@ -11,15 +11,30 @@ use threadpool::ThreadPool;
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    let image_width: u32 = 400;
+    let image_width: u32 = 720;
     let image_height = (image_width as f64 / ASPECT_RATIO) as u32;
-    let samples_per_pixel = 100;
-    let max_depth = 50;
+    let samples_per_pixel = 256;
+    let max_depth = 512;
 
     // World
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+    // - materials
+    let mat_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let mat_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+    let mat_left = Arc::new(Dielectric::new(1.5));
+    let mat_left_inner = Arc::new(Dielectric::new(1.5));
+    let mat_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
+    // - objects
+    let sphere_groud = Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground);
+    let sphere_center = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center);
+    let sphere_left = Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left);
+    let sphere_left_inner = Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left_inner);
+    let sphere_right = Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right);
+    world.add(Box::new(sphere_groud));
+    world.add(Box::new(sphere_center));
+    world.add(Box::new(sphere_left));
+    world.add(Box::new(sphere_left_inner));
+    world.add(Box::new(sphere_right));
     let world_arc = Arc::new(world);
 
     // Camera

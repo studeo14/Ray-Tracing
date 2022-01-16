@@ -32,9 +32,15 @@ impl Ray {
     }
     pub fn ray_color(&self, world: &Arc<impl Hittable + Send + Sync>, depth: u32) -> Color {
         if depth > 0 {
-            if let Some(hit_record) = world.hit(&self, (0.0, f64::INFINITY)) {
-                let target = hit_record.p + hit_record.normal + Point3::random_in_unit_sphere();
-                0.5 * Ray::new(hit_record.p, target - hit_record.p).ray_color(world, depth - 1)
+            if let Some(hit_record) = world.hit(&self, (0.001, f64::INFINITY)) {
+                if let Some((attenuation, scattered)) = hit_record.mat.scatter(&self, &hit_record) {
+                    attenuation * scattered.ray_color(world, depth - 1)
+                } else {
+                    // let target = hit_record.p + hit_record.normal + Point3::random_unit_vector();
+                    // let target = hit_record.p + Point3::random_in_hemisphere(&hit_record.normal);
+                    // 0.5 * Ray::new(hit_record.p, target - hit_record.p).ray_color(world, depth - 1)
+                    Color::empty()
+                }
             } else {
                 let unit_direction = self.direction().unit_vector();
                 let t = 0.5 * (unit_direction.y() + 1.0);
