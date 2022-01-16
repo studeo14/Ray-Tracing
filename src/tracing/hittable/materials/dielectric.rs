@@ -9,7 +9,7 @@ pub struct Dielectric {
 impl Dielectric {
     pub fn new(index_of_refraction: f64) -> Dielectric {
         Dielectric {
-            ir: index_of_refraction
+            ir: index_of_refraction,
         }
     }
     fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
@@ -20,7 +20,11 @@ impl Dielectric {
 }
 
 impl Scatter for Dielectric {
-    fn scatter(&self, ray_in: &crate::Ray, hit_record: &crate::HitRecord) -> Option<(crate::Color, crate::Ray)> {
+    fn scatter(
+        &self,
+        ray_in: &crate::Ray,
+        hit_record: &crate::HitRecord,
+    ) -> Option<(crate::Color, crate::Ray)> {
         let refraction_ratio = if hit_record.front_face {
             1.0 / self.ir
         } else {

@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Range, Sub},
 };
 
 use rand::Rng;
@@ -14,20 +14,17 @@ impl Vec3 {
     pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
         Vec3 { e: [e0, e1, e2] }
     }
-    pub fn random() -> Vec3 {
-        Vec3::new(rand::random(), rand::random(), rand::random())
-    }
-    pub fn random_b(min: f64, max: f64) -> Vec3 {
+    pub fn random(r: Range<f64>) -> Vec3 {
         let mut rng = rand::thread_rng();
         Vec3::new(
-            rng.gen_range(min..max),
-            rng.gen_range(min..max),
-            rng.gen_range(min..max),
+            rng.gen_range(r.clone()),
+            rng.gen_range(r.clone()),
+            rng.gen_range(r.clone()),
         )
     }
     pub fn random_in_unit_sphere() -> Vec3 {
         loop {
-            let p = Vec3::random_b(-1.0, 1.0);
+            let p = Vec3::random(-1.0..1.0);
             if p.length_squared() < 1.0 {
                 return p;
             }
@@ -38,10 +35,20 @@ impl Vec3 {
     }
     pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
         let in_us = Vec3::random_in_unit_sphere();
-        if in_us.dot(normal) > 0.0 { // in the same hemisphere as the normal
+        if in_us.dot(normal) > 0.0 {
+            // in the same hemisphere as the normal
             in_us
         } else {
             -in_us
+        }
+    }
+    pub fn random_in_unit_disk() -> Vec3 {
+        let mut rng = rand::thread_rng();
+        loop {
+            let p = Vec3::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
+            if p.length() < 1.0 {
+                return p;
+            }
         }
     }
     pub fn empty() -> Vec3 {

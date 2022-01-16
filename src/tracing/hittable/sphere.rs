@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::{Scatter, tracing::{ray::Ray, vec3::Point3}};
+use crate::{
+    tracing::{ray::Ray, vec3::Point3},
+    Scatter,
+};
 
 use super::{HitRecord, Hittable};
 
@@ -12,7 +15,11 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new(center: Point3, radius: f64, mat: Arc<dyn Scatter + Send + Sync>) -> Sphere {
-        Sphere { center, radius, mat }
+        Sphere {
+            center,
+            radius,
+            mat,
+        }
     }
 }
 
@@ -35,12 +42,24 @@ impl Hittable for Sphere {
                     None
                 } else {
                     let p = ray.at(root);
-                    let hr = HitRecord::new(p, root, (p - &self.center) / self.radius, ray, self.mat.clone());
+                    let hr = HitRecord::new(
+                        p,
+                        root,
+                        (p - &self.center) / self.radius,
+                        ray,
+                        self.mat.clone(),
+                    );
                     Some(hr)
                 }
             } else {
                 let p = ray.at(root);
-                let hr = HitRecord::new(p, root, (p - &self.center) / self.radius, ray, self.mat.clone());
+                let hr = HitRecord::new(
+                    p,
+                    root,
+                    (p - &self.center) / self.radius,
+                    ray,
+                    self.mat.clone(),
+                );
                 Some(hr)
             }
         }
