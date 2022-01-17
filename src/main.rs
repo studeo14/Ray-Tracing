@@ -54,6 +54,6 @@ fn main() {
         m_config: scene_transformer,
     };
 
-    animate_scene("scene_a", animation);
+    animate_scene("images/scene_a", animation);
 
 }

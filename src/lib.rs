@@ -159,7 +159,7 @@ pub fn render_scene(output_file: &str, world: Arc<HittableList>, scene_config: A
 
 pub fn animate_scene(output_file_base: &str, animation: Animation) {
     for (ix, (world_arc, scene_config)) in animation.enumerate() {
-        let output_file_ix = format!("{}_{}.png", output_file_base, ix);
+        let output_file_ix = format!("{}_{:05}.png", output_file_base, ix);
         render_scene(output_file_ix.as_str(), world_arc, scene_config);
         println!("{} done", output_file_ix);
     }
