@@ -235,7 +235,7 @@ impl SceneTransformer for CameraTransformer {
             self.t += 1;
             Some(SceneConfig::new(
                 scene_config.aspect_ratio,
-                scene_config.image_height,
+                scene_config.image_width,
                 scene_config.image_height,
                 scene_config.samples_per_pixel,
                 scene_config.max_depth,

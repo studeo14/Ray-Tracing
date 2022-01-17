@@ -30,8 +30,8 @@ fn main() {
     let num_threads = 16;
     let scene_config = SceneConfig::new(
         ASPECT_RATIO,
-        image_height,
         image_width,
+        image_height,
         samples_per_pixel,
         max_depth,
         lookfrom,
