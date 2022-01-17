@@ -1,4 +1,4 @@
-use crate::{Point3, Ray, Vec3};
+use crate::{Point3, Ray, SceneConfig, Vec3};
 
 #[derive(Debug, Clone)]
 pub struct Camera {
@@ -43,6 +43,32 @@ impl Camera {
             m_cu: cu,
             m_cv: cv,
             m_lens_radius: aperature / 2.0,
+        }
+    }
+
+    pub fn from(config: &SceneConfig) -> Camera {
+        // vertical fov
+        let theta = std::f64::consts::PI / 180.0 * config.vfov;
+        let viewport_height = 2.0 * (theta / 2.0).tan();
+        let viewport_width = config.aspect_ratio * viewport_height;
+
+        let cw = (config.lookfrom - config.lookat).unit_vector();
+        let cu = config.vup.cross(&cw).unit_vector();
+        let cv = cw.cross(&cu);
+
+        let h = config.dist_to_focus * viewport_width * cu;
+        let v = config.dist_to_focus * viewport_height * cv;
+
+        let llc = config.lookfrom - h / 2.0 - v / 2.0 - config.dist_to_focus * cw;
+
+        Camera {
+            m_origin: config.lookfrom,
+            m_horizontal: h,
+            m_vertical: v,
+            m_lower_left_corner: llc,
+            m_cu: cu,
+            m_cv: cv,
+            m_lens_radius: config.aperature / 2.0,
         }
     }
 
