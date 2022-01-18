@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
-use crate::{
-    tracing::{ray::Ray, vec3::Point3},
-    Scatter,
-};
+use crate::{Anchored, Scatter, tracing::{ray::Ray, vec3::Point3}};
 
 use super::{HitRecord, Hittable};
 
+#[derive(Clone)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
@@ -65,3 +63,14 @@ impl Hittable for Sphere {
         }
     }
 }
+
+impl Anchored for Sphere {
+    fn origin(&self) -> Point3 {
+        self.center
+    }
+
+    fn set_origin(&mut self, origin: Point3) {
+        self.center = origin;
+    }
+}
+

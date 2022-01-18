@@ -7,14 +7,14 @@ use threadpool::ThreadPool;
 use tracing::materials::{Dielectric, Lambertian, Metal};
 pub use tracing::*;
 
-pub fn random_scene() -> HittableList {
+pub fn random_scene() -> HittableMap {
     let mut rng = rand::thread_rng();
-    let mut world = HittableList::new();
+    let mut world = HittableMap::new();
 
     let ground_mat = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
     let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_mat);
 
-    world.add(Box::new(ground_sphere));
+    world.add("ground".to_string(), Box::new(ground_sphere));
 
     for a in -11..=11 {
         for b in -11..=11 {
@@ -30,19 +30,19 @@ pub fn random_scene() -> HittableList {
                 let albedo = Color::random(0.0..1.0) * Color::random(0.0..1.0);
                 let sphere_mat = Arc::new(Lambertian::new(albedo));
                 let sphere = Sphere::new(center, 0.2, sphere_mat);
-                world.add(Box::new(sphere));
+                world.add(format!("random_{}_{}", a, b), Box::new(sphere));
             } else if choose_mat < 0.95 {
                 // Metal
                 let albedo = Color::random(0.4..1.0);
                 let fuzz = rng.gen_range(0.0..0.5);
                 let sphere_mat = Arc::new(Metal::new(albedo, fuzz));
                 let sphere = Sphere::new(center, 0.2, sphere_mat);
-                world.add(Box::new(sphere));
+                world.add(format!("random_{}_{}", a, b), Box::new(sphere));
             } else {
                 // Glass
                 let sphere_mat = Arc::new(Dielectric::new(1.5));
                 let sphere = Sphere::new(center, 0.2, sphere_mat);
-                world.add(Box::new(sphere));
+                world.add(format!("random_{}_{}", a, b), Box::new(sphere));
             }
         }
     }
@@ -55,13 +55,14 @@ pub fn random_scene() -> HittableList {
     let sphere2 = Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, mat2);
     let sphere3 = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, mat3);
 
-    world.add(Box::new(sphere1));
-    world.add(Box::new(sphere2));
-    world.add(Box::new(sphere3));
+    world.add("main1".to_string(), Box::new(sphere1));
+    world.add("main2".to_string(), Box::new(sphere2));
+    world.add("main3".to_string(), Box::new(sphere3));
 
     world
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct SceneConfig {
     pub aspect_ratio: f64,
     pub image_width: u32,
@@ -109,7 +110,7 @@ impl SceneConfig {
     }
 }
 
-pub fn render_scene(output_file: &str, world: Arc<HittableList>, scene_config: Arc<SceneConfig>) {
+pub fn render_scene(output_file: &str, world: Arc<impl Hittable + 'static>, scene_config: Arc<SceneConfig>) {
     let camera = Camera::from(&scene_config);
     let camera_arc = Arc::new(camera);
     // Render
@@ -165,29 +166,43 @@ pub fn animate_scene(output_file_base: &str, animation: Animation) {
     }
 }
 
-pub trait Transformer {
-    fn apply(self, world: &mut HittableList, config: &mut SceneConfig);
-}
-
 pub struct Animation {
-    pub m_world: Arc::<HittableList>,
+    pub m_world: AnimatedWorld,
     pub m_config: AnimatedConfig,
 }
 
 impl Iterator for Animation {
-    type Item = (Arc<HittableList>, Arc::<SceneConfig>);
+    type Item = (Arc<HittableMap>, Arc::<SceneConfig>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(cfg) = self.m_config.next() {
-            Some((self.m_world.clone(), cfg))
+        if let (Some(world), Some(cfg)) = (self.m_world.next(), self.m_config.next()) {
+            Some((world, cfg))
         } else {
             None
         }
     }
 }
 
+pub struct AnimatedWorld {
+    pub world: Arc<HittableMap>,
+    pub transformers: Vec<Box<dyn WorldTransformer>>,
+}
+
+impl Iterator for AnimatedWorld {
+    type Item = Arc<HittableMap>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for transformer in &mut self.transformers[..] {
+            if !transformer.transform(Arc::get_mut(&mut self.world).unwrap()) {
+                return None;
+            }
+        }
+        Some(Arc::clone(&self.world))
+    }
+}
+
 pub struct AnimatedConfig {
-    pub config: Arc::<SceneConfig>,
+    pub config: Arc<SceneConfig>,
     pub transformers: Vec<Box<dyn SceneTransformer>>,
 }
 
@@ -206,6 +221,45 @@ impl Iterator for AnimatedConfig {
     }
 }
 
+pub trait WorldTransformer {
+    fn transform(&mut self, world: &mut HittableMap) -> bool;
+}
+
+pub struct ObjectMover {
+    t: usize,
+    steps: usize,
+    step: Point3,
+    name: String,
+}
+
+impl ObjectMover {
+    pub fn new(name: String, starting_point: Point3, stopping_point: Point3, steps: usize) -> ObjectMover {
+        let step = (stopping_point - starting_point) / steps as f64;
+        ObjectMover {
+            name,
+            steps,
+            t: 0,
+            step
+        }
+    }
+}
+
+impl WorldTransformer for ObjectMover {
+    fn transform(&mut self, world: &mut HittableMap) -> bool {
+        if self.t >= self.steps {
+            false
+        } else {
+            self.t += 1;
+            if let Some(object) = world.objects.get_mut(&self.name) {
+                object.set_origin(object.origin() + self.step);
+                true
+            } else {
+                false
+            }
+        }
+    }
+}
+
 pub trait SceneTransformer {
     fn transform(&mut self, scene_config: &SceneConfig) -> Option<SceneConfig>;
 }
@@ -218,7 +272,7 @@ pub struct CameraTransformer {
 
 impl CameraTransformer {
     pub fn new(starting_point: Point3, stopping_point: Point3, steps: usize) -> CameraTransformer {
-        let step = (starting_point - stopping_point) / steps as f64;
+        let step = (stopping_point - starting_point) / steps as f64;
         CameraTransformer {
             steps,
             t: 0,
@@ -233,20 +287,9 @@ impl SceneTransformer for CameraTransformer {
             None
         } else {
             self.t += 1;
-            Some(SceneConfig::new(
-                scene_config.aspect_ratio,
-                scene_config.image_width,
-                scene_config.image_height,
-                scene_config.samples_per_pixel,
-                scene_config.max_depth,
-                scene_config.lookfrom + self.step,
-                scene_config.lookat,
-                scene_config.vup,
-                scene_config.vfov,
-                scene_config.dist_to_focus,
-                scene_config.aperature,
-                scene_config.num_threads,
-            ))
+            let mut new_scene = scene_config.clone();
+            new_scene.lookfrom += self.step;
+            Some(new_scene)
         }
     }
 }

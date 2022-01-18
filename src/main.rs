@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ray_tracing::{AnimatedConfig, Animation, CameraTransformer, Point3, SceneConfig, Vec3, animate_scene, random_scene, render_scene};
+use ray_tracing::{AnimatedConfig, AnimatedWorld, Animation, CameraTransformer, ObjectMover, Point3, SceneConfig, Vec3, animate_scene, random_scene};
 
 /*
  * Ray Tracting Example
@@ -21,7 +21,6 @@ fn main() {
 
     // Camera
     let lookfrom = Point3::new(13.0, 2.0, 3.0);
-    let lookfrom_b = Point3::new(16.0, 1.0, 2.0);
     let lookat = Point3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let vfov = 20.0;
@@ -44,13 +43,22 @@ fn main() {
     );
     let scene_config_arc = Arc::new(scene_config);
 
+    // Animation
+    let main1_start = Point3::new(0.0, 1.0, 0.0);
+    let main1_stop = Point3::new(0.0, 3.0, 0.0);
+    let main1_mover = ObjectMover::new("main1".to_string(), main1_start, main1_stop, 240);
+    let world_animation = AnimatedWorld {
+        world: world_arc,
+        transformers: vec![Box::new(main1_mover)]
+    };
+    let lookfrom_b = Point3::new(10.0, 4.0, 5.0);
     let camera_mover = CameraTransformer::new(lookfrom, lookfrom_b, 240);
     let scene_transformer = AnimatedConfig {
         config: scene_config_arc,
         transformers: vec![Box::new(camera_mover)]
     };
     let animation = Animation {
-        m_world: world_arc,
+        m_world: world_animation,
         m_config: scene_transformer,
     };
 
