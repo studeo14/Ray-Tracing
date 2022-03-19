@@ -1,5 +1,6 @@
 mod tracing;
 use std::{io::Write, sync::{Arc, mpsc}};
+use std::time::Instant;
 
 use image::RgbImage;
 use rand::Rng;
@@ -143,6 +144,8 @@ pub fn render_scene(output_file: &str, world: Arc<impl Hittable + 'static>, scen
 
     let mut pixels_done = 0;
     let mut stdout = std::io::stdout();
+    let now = Instant::now();
+
     for (x, y, color) in res_rx {
         pixels_done += 1;
         img.put_pixel(x, y, color.to_rgb_aa(scene_config.samples_per_pixel));
@@ -155,7 +158,7 @@ pub fn render_scene(output_file: &str, world: Arc<impl Hittable + 'static>, scen
         stdout.flush().expect("Unable to flush");
     }
     img.save(output_file).expect("Unable to save image");
-    println!("\nDone");
+    println!("\nDone. Took {:.2?}s", now.elapsed());
 }
 
 pub fn animate_scene(output_file_base: &str, animation: Animation) {

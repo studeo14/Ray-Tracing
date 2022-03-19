@@ -9,7 +9,7 @@ use ray_tracing::{AnimatedConfig, AnimatedWorld, Animation, CameraTransformer, O
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    let image_width: u32 = 400;
+    let image_width: u32 = 1920;
     let image_height = (image_width as f64 / ASPECT_RATIO) as u32;
     let samples_per_pixel = 100;
     let max_depth = 50;
