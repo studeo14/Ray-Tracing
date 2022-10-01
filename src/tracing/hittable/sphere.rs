@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::{Anchored, Scatter, tracing::{ray::Ray, vec3::Point3}};
+use crate::{
+    tracing::{ray::Ray, vec3::Point3},
+    Anchored, Scatter,
+};
 
 use super::{HitRecord, Hittable};
 
@@ -73,4 +76,3 @@ impl Anchored for Sphere {
         self.center = origin;
     }
 }
-

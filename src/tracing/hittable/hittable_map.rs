@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{Anchored, HitRecord, Hittable, tracing::ray::Ray};
+use crate::{tracing::ray::Ray, Anchored, HitRecord, Hittable};
 
 pub struct HittableMap {
     pub objects: HashMap<String, Box<dyn Anchored>>,

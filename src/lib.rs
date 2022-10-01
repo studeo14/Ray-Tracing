@@ -1,7 +1,12 @@
+//! Author: Steven Frederiksen
 mod tracing;
-use std::{io::Write, sync::{Arc, mpsc}};
 use std::time::Instant;
+use std::{
+    io::Write,
+    sync::{mpsc, Arc},
+};
 
+use image::error::ImageResult;
 use image::RgbImage;
 use rand::Rng;
 use threadpool::ThreadPool;
@@ -111,7 +116,30 @@ impl SceneConfig {
     }
 }
 
-pub fn render_scene(output_file: &str, world: Arc<impl Hittable + 'static>, scene_config: Arc<SceneConfig>) {
+pub fn benchmark_scene(
+    output_file: &str,
+    world: Arc<impl Hittable + 'static>,
+    scene_config: Arc<SceneConfig>,
+    iters: u32,
+) -> ImageResult<()> {
+    let now = Instant::now();
+    for _ in 0..iters {
+        render_scene(output_file, world.clone(), scene_config.clone())?;
+    }
+
+    println!(
+        "\nDone. \n\tTotal: {:.2?}\n\tAvg: {:.2?}",
+        now.elapsed(),
+        now.elapsed() / iters
+    );
+    Ok(())
+}
+
+pub fn render_scene(
+    output_file: &str,
+    world: Arc<impl Hittable + 'static>,
+    scene_config: Arc<SceneConfig>,
+) -> ImageResult<()> {
     let camera = Camera::from(&scene_config);
     let camera_arc = Arc::new(camera);
     // Render
@@ -129,8 +157,10 @@ pub fn render_scene(output_file: &str, world: Arc<impl Hittable + 'static>, scen
             threadpool.execute(move || {
                 let mut color = Color::empty();
                 for _ in 0..scene_config.samples_per_pixel {
-                    let u = (i as f64 + rand::random::<f64>()) / (scene_config.image_width - 1) as f64;
-                    let v = (j as f64 + rand::random::<f64>()) / (scene_config.image_height - 1) as f64;
+                    let u =
+                        (i as f64 + rand::random::<f64>()) / (scene_config.image_width - 1) as f64;
+                    let v =
+                        (j as f64 + rand::random::<f64>()) / (scene_config.image_height - 1) as f64;
                     let ray = camera_arc.get_ray(u, v);
                     color += ray.ray_color(&world_arc, scene_config.max_depth);
                 }
@@ -151,22 +181,24 @@ pub fn render_scene(output_file: &str, world: Arc<impl Hittable + 'static>, scen
         img.put_pixel(x, y, color.to_rgb_aa(scene_config.samples_per_pixel));
         print!(
             "{}[1K\rPixels Done: {}/{}",
-            27 as char,
+            27 as char, // this resets the line
             pixels_done,
             scene_config.image_height * scene_config.image_width
         );
-        stdout.flush().expect("Unable to flush");
+        stdout.flush()?;
     }
-    img.save(output_file).expect("Unable to save image");
-    println!("\nDone. Took {:.2?}s", now.elapsed());
+    img.save(output_file)?;
+    println!("\nDone. Took {:.2?}", now.elapsed());
+    Ok(())
 }
 
-pub fn animate_scene(output_file_base: &str, animation: Animation) {
+pub fn animate_scene(output_file_base: &str, animation: Animation) -> ImageResult<()> {
     for (ix, (world_arc, scene_config)) in animation.enumerate() {
         let output_file_ix = format!("{}_{:05}.png", output_file_base, ix);
-        render_scene(output_file_ix.as_str(), world_arc, scene_config);
+        render_scene(output_file_ix.as_str(), world_arc, scene_config)?;
         println!("{} done", output_file_ix);
     }
+    Ok(())
 }
 
 pub struct Animation {
@@ -175,7 +207,7 @@ pub struct Animation {
 }
 
 impl Iterator for Animation {
-    type Item = (Arc<HittableMap>, Arc::<SceneConfig>);
+    type Item = (Arc<HittableMap>, Arc<SceneConfig>);
 
     fn next(&mut self) -> Option<Self::Item> {
         if let (Some(world), Some(cfg)) = (self.m_world.next(), self.m_config.next()) {
@@ -236,13 +268,18 @@ pub struct ObjectMover {
 }
 
 impl ObjectMover {
-    pub fn new(name: String, starting_point: Point3, stopping_point: Point3, steps: usize) -> ObjectMover {
+    pub fn new(
+        name: String,
+        starting_point: Point3,
+        stopping_point: Point3,
+        steps: usize,
+    ) -> ObjectMover {
         let step = (stopping_point - starting_point) / steps as f64;
         ObjectMover {
             name,
             steps,
             t: 0,
-            step
+            step,
         }
     }
 }
@@ -276,11 +313,7 @@ pub struct CameraTransformer {
 impl CameraTransformer {
     pub fn new(starting_point: Point3, stopping_point: Point3, steps: usize) -> CameraTransformer {
         let step = (stopping_point - starting_point) / steps as f64;
-        CameraTransformer {
-            steps,
-            t: 0,
-            step
-        }
+        CameraTransformer { steps, t: 0, step }
     }
 }
 

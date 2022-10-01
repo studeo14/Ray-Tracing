@@ -1,6 +1,11 @@
+//! Author: Steven Frederiksen
 use std::sync::Arc;
 
-use ray_tracing::{AnimatedConfig, AnimatedWorld, Animation, CameraTransformer, ObjectMover, Point3, SceneConfig, Vec3, animate_scene, random_scene};
+use ray_tracing::{random_scene, animate_scene};
+use ray_tracing::{
+    AnimatedConfig, AnimatedWorld, Animation, CameraTransformer, ObjectMover, Point3, SceneConfig,
+    Vec3,
+};
 
 /*
  * Ray Tracting Example
@@ -9,11 +14,10 @@ use ray_tracing::{AnimatedConfig, AnimatedWorld, Animation, CameraTransformer, O
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    let image_width: u32 = 1920;
+    let image_width: u32 = 300;
     let image_height = (image_width as f64 / ASPECT_RATIO) as u32;
-    let samples_per_pixel = 100;
-    let max_depth = 50;
-
+    let samples_per_pixel = 30;
+    let max_depth = 20;
 
     // World
     let world = random_scene();
@@ -49,19 +53,22 @@ fn main() {
     let main1_mover = ObjectMover::new("main1".to_string(), main1_start, main1_stop, 240);
     let world_animation = AnimatedWorld {
         world: world_arc,
-        transformers: vec![Box::new(main1_mover)]
+        transformers: vec![Box::new(main1_mover)],
     };
     let lookfrom_b = Point3::new(10.0, 4.0, 5.0);
     let camera_mover = CameraTransformer::new(lookfrom, lookfrom_b, 240);
     let scene_transformer = AnimatedConfig {
         config: scene_config_arc,
-        transformers: vec![Box::new(camera_mover)]
+        transformers: vec![Box::new(camera_mover)],
     };
     let animation = Animation {
         m_world: world_animation,
         m_config: scene_transformer,
     };
 
-    animate_scene("images/scene_a", animation);
-
+    if let Err(e) = animate_scene("test_scene.png", animation) {
+        println!("{}", e);
+    } else {
+        println!("Done processing!");
+    }
 }
