@@ -149,12 +149,12 @@ pub fn render_scene(
 
     let (res_tx, res_rx) = mpsc::channel();
     for j in (0..scene_config.image_height).rev() {
-        for i in 0..scene_config.image_width {
-            let res_tx = res_tx.clone();
-            let world_arc = Arc::clone(&world);
-            let camera_arc = Arc::clone(&camera_arc);
-            let scene_config = Arc::clone(&scene_config);
-            threadpool.execute(move || {
+        let res_tx = res_tx.clone();
+        let world_arc = Arc::clone(&world);
+        let camera_arc = Arc::clone(&camera_arc);
+        let scene_config = Arc::clone(&scene_config);
+        threadpool.execute(move || {
+            for i in 0..scene_config.image_width {
                 let mut color = Color::empty();
                 for _ in 0..scene_config.samples_per_pixel {
                     let u =
@@ -167,8 +167,8 @@ pub fn render_scene(
                 res_tx
                     .send((i, scene_config.image_height - 1 - j, color))
                     .expect("unable to send");
-            });
-        }
+            }
+        });
     }
     drop(res_tx);
 

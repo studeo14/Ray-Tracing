@@ -1,7 +1,7 @@
 //! Author: Steven Frederiksen
 use std::sync::Arc;
 
-use ray_tracing::{random_scene, animate_scene};
+use ray_tracing::{animate_scene, benchmark_scene, random_scene};
 use ray_tracing::{
     AnimatedConfig, AnimatedWorld, Animation, CameraTransformer, ObjectMover, Point3, SceneConfig,
     Vec3,
@@ -52,13 +52,13 @@ fn main() {
     let main1_stop = Point3::new(0.0, 3.0, 0.0);
     let main1_mover = ObjectMover::new("main1".to_string(), main1_start, main1_stop, 240);
     let world_animation = AnimatedWorld {
-        world: world_arc,
+        world: world_arc.clone(),
         transformers: vec![Box::new(main1_mover)],
     };
     let lookfrom_b = Point3::new(10.0, 4.0, 5.0);
     let camera_mover = CameraTransformer::new(lookfrom, lookfrom_b, 240);
     let scene_transformer = AnimatedConfig {
-        config: scene_config_arc,
+        config: scene_config_arc.clone(),
         transformers: vec![Box::new(camera_mover)],
     };
     let animation = Animation {
@@ -66,7 +66,8 @@ fn main() {
         m_config: scene_transformer,
     };
 
-    if let Err(e) = animate_scene("test_scene.png", animation) {
+    // if let Err(e) = animate_scene("test_scene.png", animation) {
+    if let Err(e) = benchmark_scene("output_file.png", world_arc, scene_config_arc, 10) {
         println!("{}", e);
     } else {
         println!("Done processing!");
